@@ -405,3 +405,13 @@ body.portrait-mode #landscape-warning {
 .qr-btn:hover {
   background: #203885;
 }
+/* Khi đã mở khoá, ẩn overlay QR và bỏ mờ */
+body.unlocked #qr-overlay {
+  display: none !important;
+}
+body.unlocked #app {
+  display: block !important;
+}
+body.unlocked #dark-overlay {
+  opacity: 0 !important;
+} /* bỏ lớp mờ trước khi intro */
