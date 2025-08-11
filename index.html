@@ -23,14 +23,11 @@
       }
     </script>
 
-    <!-- CSS tối thiểu cho overlay QR -->
     <style>
-      /* Ẩn input ảnh như bạn đang dùng */
       #image-input-container {
         display: none !important;
       }
 
-      /* OVERLAY QR: che toàn bộ cho tới khi unlock */
       #qr-overlay {
         position: fixed;
         inset: 0;
@@ -67,14 +64,13 @@
         margin: 8px auto 0;
       }
 
-      /* Khi mở khoá -> ẩn overlay + show app */
       body.unlocked #qr-overlay {
         display: none !important;
       }
       body.unlocked #app {
         display: block !important;
       }
-      /* Nếu muốn bỏ mờ ngay khi mở khoá: */
+
       body.unlocked #dark-overlay {
         opacity: 0 !important;
       }
@@ -168,9 +164,8 @@
       referrerpolicy="no-referrer"
     ></script>
 
-    <!-- LOCK/UNLOCK BẰNG QR (chỉ 1 lần) -->
     <script>
-      const SECRET_KEY = "mo-cua-tinh-cau"; // đổi nếu muốn
+      const SECRET_KEY = "mo-cua-tinh-cau";
       const PARAM_KEY = "key";
 
       function getImagesFromUrl() {
@@ -231,14 +226,12 @@
       })();
     </script>
     <script>
-      // Kích hoạt nhạc sau tương tác đầu tiên (iOS/Chrome chặn autoplay)
       function tryPlayOnce() {
         const m = window.musicManager;
         if (!m || !m.audio) return;
 
-        // đảm bảo không mute + resume nếu trình duyệt từng chặn
         m.audio.muted = false;
-        // tuỳ một số thiết bị cần gọi load trước
+
         try {
           m.audio.load();
         } catch (_) {}
@@ -246,22 +239,16 @@
         m.audio
           .play()
           .then(() => {
-            // cập nhật trạng thái UI sau khi play
             m.isPlaying = true;
             if (typeof m.updateUI === "function") m.updateUI();
           })
-          .catch(() => {
-            // nếu vẫn bị chặn, user có thể bấm nút loa #toggle-audio
-            // không alert để tránh phiền
-          });
+          .catch(() => {});
       }
 
-      // Gắn vào "cử chỉ" đầu tiên của user rồi gỡ luôn
       window.addEventListener("pointerdown", tryPlayOnce, { once: true });
       window.addEventListener("keydown", tryPlayOnce, { once: true });
     </script>
 
-    <!-- NẠP APP CHÍNH (CHỈ 1 LẦN, KHÔNG lazy-load) -->
     <script src="./script.js"></script>
     <script type="module" src="./galaxy.js"></script>
   </body>
