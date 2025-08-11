@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tien Thuong</title>
+    <link rel="icon" type="image/png" href="heart.png" />
+
+    <!-- CSS gốc của bạn -->
+    <link rel="stylesheet" href="./style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+
+    <!-- three.js import map -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.152.2/build/three.module.js",
+          "three/addons/controls/OrbitControls.js": "https://unpkg.com/three@0.152.2/examples/jsm/controls/OrbitControls.js",
+          "three/examples/jsm/loaders/FontLoader.js": "https://unpkg.com/three@0.152.2/examples/jsm/loaders/FontLoader.js",
+          "three/examples/jsm/geometries/TextGeometry.js": "https://unpkg.com/three@0.152.2/examples/jsm/geometries/TextGeometry.js"
+        }
+      }
+    </script>
+
+    <!-- CSS overlay QR (đè lên tất cả) -->
+    <style>
+      /* Ẩn input ảnh như bạn đang dùng */
+      #image-input-container {
+        display: none !important;
+      }
+
+      /* OVERLAY QR: luôn hiển thị, che toàn bộ cho tới khi unlock */
+      #qr-overlay {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: radial-gradient(ellipse at center, #0b0b1a 0%, #000 100%);
+        z-index: 100000; /* cao hơn mọi thứ khác */
+        color: #e0eaff;
+        text-align: center;
+        padding: 24px;
+      }
+      #qr-overlay .panel {
+        background: rgba(20, 24, 48, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 16px;
+        padding: 18px 18px 22px;
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(8px);
+        max-width: 92vw;
+      }
+      #qr-overlay h2 {
+        margin: 0 0 10px;
+        font: 700 18px/1.25 system-ui, -apple-system, Segoe UI, Roboto,
+          sans-serif;
+        letter-spacing: 0.3px;
+      }
+      #qr-overlay p {
+        margin: 10px 0 0;
+        font-size: 12px;
+        opacity: 0.8;
+      }
+      #qr-box {
+        margin: 10px auto 4px;
+        padding: 10px;
+        background: #fff;
+        border-radius: 12px;
+        display: inline-block;
+      }
+      #qr-link {
+        word-break: break-all;
+        font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        color: #b9c4ff;
+        opacity: 0.9;
+        max-width: 78vw;
+        margin: 8px auto 0;
+      }
+
+      /* Khi đã mở khóa, ẩn overlay hoàn toàn */
+      body.unlocked #qr-overlay {
+        display: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- OVERLAY: chỉ QR -->
+    <div id="qr-overlay" aria-hidden="false">
+      <div class="panel">
+        <h2>Quét mã để mở “Love Tinh Cầu”</h2>
+        <div id="qr-box"></div>
+        <p id="qr-link"></p>
+        <p>(Giữ nguyên bộ ảnh hiện tại trong liên kết)</p>
+      </div>
+    </div>
+
+    <!-- ỨNG DỤNG CHÍNH (chỉ hiển thị khi đã unlock) -->
+    <div id="app" style="display: none">
+      <div id="container">
+        <div id="image-input-container">
+          <label>Nhập link ảnh:</label><br />
+          <textarea id="image-links" rows="4" cols="40"></textarea><br />
+          <button id="generate-link">Copy link</button>
+        </div>
+
+        <button
+          id="toggle-audio"
+          class="text-white btn-audio-toggle"
+          style="position: absolute; top: 10px; right: 10px; z-index: 999"
+        >
+          <i id="audio-icon" class="fa-solid fa-volume-xmark"></i>
+        </button>
+
+        <div id="landscape-warning">
+          <div class="warning-content">
+            <div class="rotate-icon"></div>
+            <h1>Love</h1>
+            <h1>Tinh Cầu</h1>
+            <p style="font-size: 0.6em">Cậu hãy xoay ngang màn hình nha!</p>
+            <p style="font-size: 0.6em">
+              Nhớ chạm vào tinh cầu ở giữa để mở quà bí mật nha.
+            </p>
+            <div class="stars-bg"></div>
+          </div>
+        </div>
+
+        <div id="dark-overlay"></div>
+        <div id="info"></div>
+      </div>
+    </div>
+
+    <!-- CẤU HÌNH ẢNH CỐ ĐỊNH Ở ĐÂY -->
+    <script>
+      window.dataLove2Loveloom = {
+        template: "galaxy",
+        data: {
+          keychain: {
+            name: "Loveloom",
+            phone: "Loveloom",
+            address: "Loveloom",
+          },
+          ringTexts: ["My love"],
+          images: [
+            "./image/3.jpg",
+            "./image/4.jpg",
+            "./image/7.jpg",
+            "./image/8.jpg",
+            "./image/9.jpg",
+            "./image/10.jpg",
+            "./image/11.jpg",
+            "./image/12.jpg",
+            "./image/13.jpg",
+            "./image/15.jpg",
+            "./image/16.jpg",
+            "./image/17.jpg",
+            "./image/19.jpg",
+            "./image/20.jpg",
+            "./image/21.jpg",
+          ],
+        },
+      };
+    </script>
+
+    <!-- QRCode lib -->
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+
+    <!-- ====== KHÓA BẰNG QR: LOGIC ====== -->
+    <script>
+      // CHỈNH MÃ BÍ MẬT Ở ĐÂY
+      const SECRET_KEY = "mo-cua-tinh-cau"; // ví dụ: thay chuỗi này theo ý bạn
+      const PARAM_KEY = "key"; // tên query param
+
+      // Lấy mảng ảnh từ URL (?images=...) hoặc từ cấu hình mặc định
+      function getImagesFromUrl() {
+        const raw = new URLSearchParams(location.search).get("images");
+        if (!raw) return null;
+        return decodeURIComponent(raw)
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+      }
+      function getActiveImages() {
+        return (
+          getImagesFromUrl() || (window.dataLove2Loveloom?.data?.images ?? [])
+        );
+      }
+
+      // Dựng URL chia sẻ: giữ nguyên path + thêm key bí mật + giữ ?images=...
+      function buildShareUrlWithKey() {
+        const { protocol, host, pathname } = location;
+        const base = `${protocol}//${host}${pathname}`;
+        const imgs = getActiveImages();
+        const params = new URLSearchParams();
+        params.set(PARAM_KEY, SECRET_KEY);
+        if (imgs && imgs.length)
+          params.set("images", encodeURIComponent(imgs.join(",")));
+        return `${base}?${params.toString()}`;
+      }
+
+      // Kiểm tra mở khóa
+      function hasValidKey() {
+        const params = new URLSearchParams(location.search);
+        return params.get(PARAM_KEY) === SECRET_KEY;
+      }
+
+      // Khởi động: nếu có key đúng -> show app, ẩn QR; nếu không -> render QR
+      (function gateByQR() {
+        const app = document.getElementById("app");
+        const overlay = document.getElementById("qr-overlay");
+        const box = document.getElementById("qr-box");
+        const linkEl = document.getElementById("qr-link");
+
+        if (hasValidKey()) {
+          document.body.classList.add("unlocked");
+          overlay.setAttribute("aria-hidden", "true");
+          overlay.style.display = "none";
+          app.style.display = "block";
+        } else {
+          // Chỉ hiển thị QR
+          const url = buildShareUrlWithKey();
+          linkEl.textContent = url;
+          if (window.QRCode && box) {
+            box.innerHTML = "";
+            new QRCode(box, {
+              text: url,
+              width: 280,
+              height: 280,
+              colorDark: "#000",
+              colorLight: "#fff",
+              correctLevel: QRCode.CorrectLevel.H,
+            });
+          }
+          // Ẩn toàn bộ app cho sạch
+          app.style.display = "none";
+          document.body.classList.remove("unlocked");
+        }
+      })();
+    </script>
+
+    <!-- Chỉ load app nặng sau khi đã unlock: 
+         mẹo nhỏ — ta defer việc mount JS nặng bằng script động -->
+    <script>
+      (function lazyLoadApp() {
+        if (!("URLSearchParams" in window)) return; // cũ quá thì thôi
+        const params = new URLSearchParams(location.search);
+        if (params.get("key") === "mo-cua-tinh-cau") {
+          // đã unlock => nạp script nặng
+          const s1 = document.createElement("script");
+          s1.src = "./script.js";
+          s1.defer = true;
+          const s2 = document.createElement("script");
+          s2.type = "module";
+          s2.src = "./galaxy.js";
+          document.body.appendChild(s1);
+          document.body.appendChild(s2);
+        }
+      })();
+    </script>
+  </body>
+</html>
